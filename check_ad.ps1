@@ -15,6 +15,7 @@ function dt {
 
 function parse {
   Param ($txtp)
+  # Parse an output line from dcdiag command and change state of checks
   # Convert tabs to spaces and remove superfluous characters 
   #$txtp = $txtp -replace "[`n`r]", ""
   $txtp = $txtp -replace "`t", " "
@@ -92,7 +93,6 @@ if ($debug) {
 $lineout=""
 # find test results and parse them
 ForEach ($line in $res) {
-  # Parse an output line from dcdiag command and change state of checks
   dt("input line: ""$line""")
   if ($line -match "\.\.\.\.\.") { 
     #testresults start with a couple of dots, reset the lineout buffer
@@ -101,6 +101,7 @@ ForEach ($line in $res) {
     #do not test it yet as it may be split over two lines
   } else {
     # Else append the next line to the buffer to capture multiline responses
+    # this may append garbage to the end of a complete test line but we don't care
     if ($lineout -match "\.\.\.\.\.") {
       $lineout += $line
       dt("lineout buffer appended: ""$lineout""")
@@ -110,6 +111,7 @@ ForEach ($line in $res) {
         dt("parsing: ""$lineout""")
         parse($lineout)
         if ($line -ne "") {
+          # only reset if we appended something
           $lineout = ""
         }
       }
