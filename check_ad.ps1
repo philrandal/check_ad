@@ -17,7 +17,6 @@ function parse {
   Param ($txtp)
   # Parse an output line from dcdiag command and change state of checks
   # Convert tabs to spaces and remove superfluous characters 
-  #$txtp = $txtp -replace "[`n`r]", ""
   $txtp = $txtp -replace "`t", " "
   $txtp = $txtp -replace "\s+", " "
   dt("txtp=$txtp")
@@ -25,7 +24,7 @@ function parse {
   $matched=$false
   $i=0
   while ((!$matched) -and ($i -lt $name.count)) {
-    If ($txtp -match "passed test (?<test>.*)") {
+    If ($txtp -match "passed test (?<test>[A-Za-z]*)") {
       $test=$matches['test']
       dt("Checking ""$txtp"" as it contains 'passed test $test'")
       foreach ($strname in $name[$i]) {
