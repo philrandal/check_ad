@@ -15,9 +15,8 @@ function dt {
 
 function parse {
   Param ($txtp)
-  # Parse an output line from dcdiag command and change state of checks
   # Convert tabs to spaces and remove superfluous characters 
-  $txtp = $txtp -replace "[`n`r]", ""
+  #$txtp = $txtp -replace "[`n`r]", ""
   $txtp = $txtp -replace "`t", " "
   $txtp = $txtp -replace "\s+", " "
   dt("txtp=$txtp")
@@ -87,29 +86,40 @@ for ($i=0; $i -lt $name.count; $i++) {
 $parms=$params.split(" ")
 # run dcdiag command
 $res=& $cmd $parms
+if ($debug) {
+  $res
+}
 $lineout=""
 # find test results and parse them
 ForEach ($line in $res) {
-  if ($line -match ".....") { 
+  # Parse an output line from dcdiag command and change state of checks
+  dt("input line: ""$line""")
+  if ($line -match "\.\.\.\.\.") { 
     #testresults start with a couple of dots, reset the lineout buffer
-      $lineout=$line
-      dt("lineout buffer: ""$lineout""")
-      #do not test it yet as it may be split over two lines
+    $lineout=$line
+    dt("lineout buffer: ""$lineout""")
+    #do not test it yet as it may be split over two lines
   } else {
     # Else append the next line to the buffer to capture multiline responses
-    $lineout += $line
-    dt("lineout buffer appended: ""$lineout""")
-    # test line as we've now appended any overflow
-    if (($lineout -match "passed test") -or ($lineout -match "failed test")) {
-      #we have a strOK String which means we have reached the end of a result output (maybe on newline)
-      parse($lineout)
-      $lineout = ""
+    if ($lineout -match "\.\.\.\.\.") {
+      $lineout += $line
+      dt("lineout buffer appended: ""$lineout""")
+      # test line as we've now appended any overflow
+      if (($lineout -match "passed test") -or ($lineout -match "failed test")) {
+        #we have a strOK String which means we have reached the end of a result output (maybe on newline)
+        dt("parsing: ""$lineout""")
+        parse($lineout)
+        if ($line -ne "") {
+          $lineout = ""
+        }
+      }
     }
   }  
 }
 # Catch the very last test (may be in the lineout buffer but not yet processed)
 if ( ($lineout -match "passed test") -or ($lineout -match "failed test") ) {
   #we have a strOK String which means we have reached the end of a result output (maybe on newline)
+  dt("last lineout: ""$lineout""")
   parse($lineout)
 }
 
